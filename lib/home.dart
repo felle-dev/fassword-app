@@ -113,11 +113,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('Fassword'),
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -129,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 applicationIcon: Icon(
                   Icons.lock_rounded,
                   size: 48,
-                  color: colorScheme.primary,
+                  color: theme.colorScheme.primary,
                 ),
                 children: [const Text('A secure and simple password manager.')],
               );
@@ -140,20 +142,26 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: SearchBar(
+            padding: const EdgeInsets.all(20),
+            child: TextField(
               controller: _searchController,
-              hintText: 'Search passwords',
-              trailing: _searchController.text.isNotEmpty
-                  ? [
-                      IconButton(
+              decoration: InputDecoration(
+                hintText: 'Search passwords',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
                         },
-                      ),
-                    ]
-                  : null,
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
+              ),
             ),
           ),
           Expanded(
@@ -161,37 +169,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredPasswords.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.lock_outline,
-                          size: 80,
-                          color: colorScheme.outline,
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          _searchController.text.isEmpty
-                              ? 'No passwords saved'
-                              : 'No results found',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: colorScheme.onSurface.withOpacity(0.7),
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.lock_outline,
+                            size: 80,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                        ),
-                        if (_searchController.text.isEmpty) ...[
-                          const SizedBox(height: 16),
-                          FilledButton.icon(
-                            onPressed: () => _addOrEditPassword(),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add Password'),
+                          const SizedBox(height: 24),
+                          Text(
+                            _searchController.text.isEmpty
+                                ? 'No passwords saved'
+                                : 'No results found',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
+                          if (_searchController.text.isEmpty) ...[
+                            const SizedBox(height: 16),
+                            FilledButton.icon(
+                              onPressed: () => _addOrEditPassword(),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add Password'),
+                              style: FilledButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: _filteredPasswords.length,
                     itemBuilder: (ctx, i) {
                       final entry = _filteredPasswords[i];
@@ -199,100 +214,122 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? entry.website[0].toUpperCase()
                           : '?';
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        elevation: 0,
-                        color: colorScheme.surfaceContainerHighest,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => _showPasswordDetails(entry),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 24,
-                                  backgroundColor: colorScheme.primaryContainer,
-                                  child: Text(
-                                    initial,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20,
-                                      color: colorScheme.onPrimaryContainer,
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            color: theme.colorScheme.surface,
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () => _showPasswordDetails(entry),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: theme.colorScheme.primary,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        entry.website,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 16,
+                                    child: Center(
+                                      child: Text(
+                                        initial,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                          color: theme.colorScheme.primary,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        entry.username,
-                                        style: TextStyle(
-                                          color: colorScheme.onSurface
-                                              .withOpacity(0.7),
-                                          fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          entry.website,
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          entry.username,
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  PopupMenuButton(
+                                    icon: const Icon(Icons.more_vert),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    itemBuilder: (ctx) => [
+                                      PopupMenuItem(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 20,
+                                              color:
+                                                  theme.colorScheme.onSurface,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Text('Edit'),
+                                          ],
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.delete_outline,
+                                              size: 20,
+                                              color: theme.colorScheme.error,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              'Delete',
+                                              style: TextStyle(
+                                                color: theme.colorScheme.error,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
+                                    onSelected: (value) {
+                                      if (value == 'edit') {
+                                        _addOrEditPassword(entry);
+                                      } else if (value == 'delete') {
+                                        _deletePassword(entry);
+                                      }
+                                    },
                                   ),
-                                ),
-                                PopupMenuButton(
-                                  icon: const Icon(Icons.more_vert),
-                                  itemBuilder: (ctx) => [
-                                    PopupMenuItem(
-                                      value: 'edit',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.edit_outlined,
-                                            size: 20,
-                                            color: colorScheme.onSurface,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          const Text('Edit'),
-                                        ],
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 'delete',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.delete_outline,
-                                            size: 20,
-                                            color: colorScheme.error,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Delete',
-                                            style: TextStyle(
-                                              color: colorScheme.error,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                  onSelected: (value) {
-                                    if (value == 'edit') {
-                                      _addOrEditPassword(entry);
-                                    } else if (value == 'delete') {
-                                      _deletePassword(entry);
-                                    }
-                                  },
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -300,13 +337,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
           ),
+          const SizedBox(height: 100), // Space for FAB
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addOrEditPassword(),
         icon: const Icon(Icons.add),
         label: const Text('Add Password'),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -314,6 +355,9 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (ctx) => PasswordDetailsSheet(
         entry: entry,
         onEdit: () {
