@@ -39,6 +39,7 @@ dependencies:
   dynamic_color: ^1.8.1
   file_picker: ^10.3.8
   share_plus: ^12.0.1
+  change_app_package_name: ^1.5.0
 
 dev_dependencies:
   flutter_test:

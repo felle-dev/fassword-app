@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.fassword"
+    namespace = "com.felle.fassword"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.fassword"
+        applicationId = "com.felle.fassword"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
