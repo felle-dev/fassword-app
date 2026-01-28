@@ -46,8 +46,9 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$label copied'),
+        content: Text('$label copied to clipboard'),
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -78,6 +79,7 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
           controller: controller,
           padding: const EdgeInsets.all(24),
           children: [
+            // Drag handle
             Center(
               child: Container(
                 width: 40,
@@ -89,36 +91,44 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
               ),
             ),
             const SizedBox(height: 24),
+
+            // Header with icon and title
             Center(
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: entryColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: entryColor,
+              child: Column(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: entryColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Text(
+                        initial,
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: entryColor,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.entry.website,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+                  const SizedBox(height: 16),
+                  Text(
+                    widget.entry.website,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 32),
-            _buildDetailCard(
+
+            // Username field
+            _buildInfoCard(
               context,
               icon: Icons.person_outline,
               label: 'Username',
@@ -126,30 +136,41 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
               onCopy: () => _copyToClipboard(widget.entry.username, 'Username'),
             ),
             const SizedBox(height: 12),
-            _buildDetailCard(
+
+            // Password field
+            _buildInfoCard(
               context,
               icon: Icons.lock_outline,
               label: 'Password',
               value: _showPassword ? widget.entry.password : '••••••••••••',
+              onCopy: () => _copyToClipboard(widget.entry.password, 'Password'),
               trailing: IconButton(
                 icon: Icon(
                   _showPassword
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
+                  size: 20,
                 ),
                 onPressed: () => setState(() => _showPassword = !_showPassword),
+                tooltip: _showPassword ? 'Hide password' : 'Show password',
               ),
             ),
+
+            // Notes field (if exists)
             if (widget.entry.notes.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _buildDetailCard(
+              _buildInfoCard(
                 context,
                 icon: Icons.notes_outlined,
                 label: 'Notes',
                 value: widget.entry.notes,
+                maxLines: 5,
               ),
             ],
+
             const SizedBox(height: 24),
+
+            // Metadata card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -158,43 +179,26 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
               ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Created: ${_formatDate(widget.entry.createdAt)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  _buildMetadataRow(
+                    context,
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Created',
+                    value: _formatDate(widget.entry.createdAt),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.update,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Updated: ${_formatDate(widget.entry.updatedAt)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 12),
+                  _buildMetadataRow(
+                    context,
+                    icon: Icons.update_outlined,
+                    label: 'Updated',
+                    value: _formatDate(widget.entry.updatedAt),
                   ),
                 ],
               ),
             ),
+
             const SizedBox(height: 24),
+
+            // Action buttons
             Row(
               children: [
                 Expanded(
@@ -204,6 +208,9 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
                     label: const Text('Edit'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -222,24 +229,29 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: theme.colorScheme.errorContainer,
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailCard(
+  Widget _buildInfoCard(
     BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
     VoidCallback? onCopy,
     Widget? trailing,
+    int maxLines = 1,
   }) {
     final theme = Theme.of(context);
 
@@ -254,11 +266,11 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: theme.colorScheme.primary),
+              Icon(icon, size: 18, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: theme.textTheme.labelLarge?.copyWith(
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
@@ -275,19 +287,55 @@ class _PasswordDetailsSheetState extends State<PasswordDetailsSheet> {
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: maxLines,
+                  overflow: maxLines > 1 ? TextOverflow.ellipsis : null,
                 ),
               ),
-              if (onCopy != null)
+              if (onCopy != null) ...[
+                const SizedBox(width: 8),
                 IconButton.filledTonal(
                   icon: const Icon(Icons.copy, size: 18),
                   onPressed: onCopy,
                   tooltip: 'Copy',
+                  style: IconButton.styleFrom(
+                    padding: const EdgeInsets.all(10),
+                  ),
                 ),
+              ],
               if (trailing != null) trailing,
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetadataRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Text(
+          value,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

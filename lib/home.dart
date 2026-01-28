@@ -6,6 +6,7 @@ import 'package:fassword/models.dart';
 import 'package:fassword/password_detail.dart';
 import 'package:fassword/password_screen.dart';
 import 'dart:convert';
+import 'dart:ui';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -296,256 +297,183 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _showAboutDialog(BuildContext context) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('About Fassword'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'A secure and elegant password manager for all your credentials.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Store, organize, and access your passwords with confidence. Your data is encrypted and stored securely on your device.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              showLicensePage(
+                context: context,
+                applicationName: 'Fassword',
+                applicationVersion: '1.0.0',
+              );
+            },
+            icon: const Icon(Icons.description_outlined, size: 18),
+            label: const Text('Licenses'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    final isSmallScreen = size.width < 600;
-    final isTablet = size.width >= 600 && size.width < 1024;
-    final isDesktop = size.width >= 1024;
-
-    // Responsive values
-    final horizontalPadding = isSmallScreen ? 16.0 : (isTablet ? 32.0 : 48.0);
-    final searchPadding = isSmallScreen ? 16.0 : (isTablet ? 24.0 : 32.0);
-    final cardPadding = isSmallScreen ? 16.0 : 20.0;
-    final avatarSize = isSmallScreen ? 48.0 : 52.0;
-    final maxContentWidth = isDesktop ? 1200.0 : double.infinity;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Fassword'),
-        centerTitle: false,
-        elevation: 0,
-        surfaceTintColor: theme.colorScheme.surface,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              expandedHeight: 120.0,
+              floating: false,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  'Fasswords',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                expandedTitleScale: 1.5,
+              ),
+              backgroundColor: theme.colorScheme.surface,
+              foregroundColor: theme.colorScheme.onSurface,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.upload_file),
+                  onPressed: _exportPasswords,
+                  tooltip: 'Export',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.download_outlined),
+                  onPressed: _importPasswords,
+                  tooltip: 'Import',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.info_outline),
+                  onPressed: () => _showAboutDialog(context),
+                  tooltip: 'About',
+                ),
+              ],
             ),
-            itemBuilder: (ctx) => <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(
-                value: 'export',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.upload_file,
-                      size: 20,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text('Export Passwords'),
-                  ],
-                ),
-              ),
-              PopupMenuItem<String>(
-                value: 'import',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.download,
-                      size: 20,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text('Import Passwords'),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem<String>(
-                value: 'about',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 20,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text('About'),
-                  ],
-                ),
-              ),
-            ],
-            onSelected: (value) {
-              if (value == 'export') {
-                _exportPasswords();
-              } else if (value == 'import') {
-                _importPasswords();
-              } else if (value == 'about') {
-                showAboutDialog(
-                  context: context,
-                  applicationName: 'Fassword',
-                  applicationVersion: '1.0.0',
-                  applicationIcon: Icon(
-                    Icons.lock_rounded,
-                    size: 48,
-                    color: theme.colorScheme.primary,
+          ];
+        },
+        body: Column(
+          children: [
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search passwords',
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: BorderSide.none,
                   ),
-                  children: [
-                    const Text('A secure and simple password manager.'),
-                  ],
-                );
-              }
-            },
-          ),
-          if (isDesktop) SizedBox(width: horizontalPadding / 2),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxContentWidth),
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  searchPadding,
-                  searchPadding,
-                  searchPadding,
-                  isSmallScreen ? 12 : 16,
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search passwords',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(28),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest,
-                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
                 ),
               ),
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _filteredPasswords.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(isSmallScreen ? 32.0 : 48.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.lock_open_rounded,
-                                size: isSmallScreen ? 80 : 96,
-                                color: theme.colorScheme.primary.withOpacity(
-                                  0.5,
-                                ),
+            ),
+            // Content
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _filteredPasswords.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_open_rounded,
+                              size: 80,
+                              color: theme.colorScheme.primary.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'No passwords yet'
+                                  : 'No results found',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
                               ),
-                              SizedBox(height: isSmallScreen ? 24 : 32),
-                              Text(
-                                _searchController.text.isEmpty
-                                    ? 'No passwords yet'
-                                    : 'No results found',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  color: theme.colorScheme.onSurface,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: isSmallScreen ? 22 : 26,
-                                ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'Start by adding your first password'
+                                  : 'Try a different search term',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _searchController.text.isEmpty
-                                    ? 'Start by adding your first password'
-                                    : 'Try a different search term',
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              if (_searchController.text.isEmpty) ...[
-                                const SizedBox(height: 32),
-                                FilledButton.icon(
-                                  onPressed: () => _addOrEditPassword(),
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Add your first password'),
-                                  style: FilledButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: isSmallScreen ? 24 : 32,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      )
-                    : isDesktop
-                    ? _buildDesktopGrid(theme, horizontalPadding)
-                    : _buildMobileList(
-                        theme,
-                        horizontalPadding,
-                        cardPadding,
-                        avatarSize,
                       ),
-              ),
-              SizedBox(height: isSmallScreen ? 80 : 100),
-            ],
-          ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                      itemCount: _filteredPasswords.length,
+                      itemBuilder: (ctx, i) {
+                        final entry = _filteredPasswords[i];
+                        return _buildPasswordCard(entry, theme);
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      extendBody: true,
+      floatingActionButton: CustomFloatingFAB(
         onPressed: () => _addOrEditPassword(),
-        icon: const Icon(Icons.add),
-        label: Text(isSmallScreen ? 'Add' : 'Add Password'),
-        elevation: 0,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  Widget _buildMobileList(
-    ThemeData theme,
-    double horizontalPadding,
-    double cardPadding,
-    double avatarSize,
-  ) {
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      itemCount: _filteredPasswords.length,
-      itemBuilder: (ctx, i) {
-        final entry = _filteredPasswords[i];
-        return _buildPasswordCard(entry, theme, cardPadding, avatarSize);
-      },
-    );
-  }
-
-  Widget _buildDesktopGrid(ThemeData theme, double horizontalPadding) {
-    return GridView.builder(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 4,
-      ),
-      itemCount: _filteredPasswords.length,
-      itemBuilder: (ctx, i) {
-        final entry = _filteredPasswords[i];
-        return _buildPasswordCard(entry, theme, 20, 52);
-      },
-    );
-  }
-
-  Widget _buildPasswordCard(
-    PasswordEntry entry,
-    ThemeData theme,
-    double cardPadding,
-    double avatarSize,
-  ) {
+  Widget _buildPasswordCard(PasswordEntry entry, ThemeData theme) {
     final initial = entry.website.isNotEmpty
         ? entry.website[0].toUpperCase()
         : '?';
@@ -560,12 +488,12 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(20),
           onTap: () => _showPasswordDetails(entry),
           child: Padding(
-            padding: EdgeInsets.all(cardPadding),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Container(
-                  width: avatarSize,
-                  height: avatarSize,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: entryColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(14),
@@ -575,7 +503,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       initial,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: avatarSize * 0.42,
+                        fontSize: 20,
                         color: entryColor,
                       ),
                     ),
@@ -613,6 +541,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () {
                     showModalBottomSheet(
                       context: context,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(28),
+                        ),
+                      ),
                       builder: (ctx) => Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
@@ -676,6 +609,78 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.pop(ctx);
           _deletePassword(entry);
         },
+      ),
+    );
+  }
+}
+
+// Custom Floating Action Button with glassmorphism effect
+class CustomFloatingFAB extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const CustomFloatingFAB({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(40),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.15),
+                width: 1,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onPressed,
+                borderRadius: BorderRadius.circular(40),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Add Password',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
